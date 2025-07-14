@@ -9,45 +9,40 @@ public class InventorySlot : MonoBehaviour
     public Image backgroundImage;
     public Image itemImage;
     public TextMeshProUGUI amountText;
-
     public Sprite normalBackground;
     public Sprite selectedBackground;
 
-    private ItemData item;
-    private int count;
+    private ItemData currentItem;
+    private int itemCount = 0;
 
-    public void SetSelected(bool selected)
+    public void SetItem(ItemData item)
     {
-        backgroundImage.sprite = selected ? selectedBackground : normalBackground;
-    }
-
-    public void SetItem(ItemData newItem)
-    {
-        item = newItem;
+        currentItem = item;
+        itemCount = 1;
         itemImage.sprite = item.icon;
         itemImage.enabled = true;
-        count = 1;
-        amountText.text = "x" + count;
+        UpdateText();
     }
 
     public void AddCount()
     {
-        count++;
-        amountText.text = "x" + count;
+        itemCount++;
+        UpdateText();
     }
 
-    public bool IsEmpty()
+    public void SetSelected(bool isSelected)
     {
-        return item == null;
+        backgroundImage.sprite = isSelected ? selectedBackground : normalBackground;
     }
 
-    public ItemData GetItem()
-    {
-        return item;
-    }
+    public bool IsEmpty() => currentItem == null;
 
-    public bool Matches(ItemData targetItem)
+    public bool Matches(ItemData item) => currentItem != null && currentItem == item;
+
+    public bool IsFull() => currentItem != null && itemCount >= currentItem.maxStack;
+
+    private void UpdateText()
     {
-        return item == targetItem;
+        amountText.text = "x" + itemCount;
     }
 }

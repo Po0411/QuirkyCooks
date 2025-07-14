@@ -115,6 +115,8 @@ GameObject:
   m_Component:
   - component: {fileID: 3579490751187079801}
   - component: {fileID: 62713027330388870}
+  - component: {fileID: 8856666096585419146}
+  - component: {fileID: 2669666023885772343}
   - component: {fileID: 6999295106270058451}
   m_Layer: 0
   m_Name: Player
@@ -154,12 +156,41 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   walkSpeed: 3
   runSpeed: 6
+--- !u!114 &8856666096585419146
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4657304744447731407}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23ed83b0d81cf6e408da2d68a7944e6c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pickupRange: 5
+  pickupLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  playerCamera: {fileID: 521574997397456843}
+  inventory: {fileID: 0}
+--- !u!114 &2669666023885772343
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4657304744447731407}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5b084f1e8214da4899ee1e8ee87d611, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
   maxStamina: 100
   currentStamina: 0
-  staminaDrainRate: 10
-  staminaRegenRate: 5
-  airGunPrefab: {fileID: 4657304744447731407}
-  firePoint: {fileID: 4610199843120610120}
+  drainRate: 20
+  recoverRate: 10
+  staminaFillImage: {fileID: 0}
 --- !u!143 &6999295106270058451
 CharacterController:
   m_ObjectHideFlags: 0
@@ -338,6 +369,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mouseSensitivity: 100
   playerBody: {fileID: 3579490751187079801}
+  limits_u: 0
+  limits_d: 0
 --- !u!1 &6715033985119824035
 GameObject:
   m_ObjectHideFlags: 0
