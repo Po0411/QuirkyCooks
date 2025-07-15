@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1d100b878bb729e4dbb448c4d23fd460, type: 3}
-  m_Name: Text
+  m_Name: Text-b
   m_EditorClassIdentifier: 
   itemName: Text
-  icon: {fileID: 21300000, guid: 1fe84fcf30a50fa42860f6cb824f54b4, type: 3}
+  icon: {fileID: 21300000, guid: 2405bcab9e8b6f944926ef00a929e91e, type: 3}
   isStackable: 1
   maxStack: 4
