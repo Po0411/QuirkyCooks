@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d100b878bb729e4dbb448c4d23fd460, type: 3}
   m_Name: Text-c
   m_EditorClassIdentifier: 
-  itemName: 
-  icon: {fileID: 0}
+  itemName: "\uD584\uBC84\uAC70"
+  icon: {fileID: 21300000, guid: f01858939026950468533ab6b9a82b66, type: 3}
   isStackable: 1
   maxStack: 4

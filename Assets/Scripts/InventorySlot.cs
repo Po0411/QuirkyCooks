@@ -18,9 +18,6 @@ public class InventorySlot : MonoBehaviour
     private ItemData currentItem;
     private int itemCount = 0;
 
-    /// <summary>
-    /// 슬롯에 새 아이템을 설정합니다.
-    /// </summary>
     public void SetItem(ItemData item)
     {
         currentItem = item;
@@ -30,34 +27,21 @@ public class InventorySlot : MonoBehaviour
         UpdateText();
     }
 
-    /// <summary>
-    /// 현재 슬롯의 아이템 수량을 1만큼 증가시킵니다.
-    /// </summary>
     public void AddCount()
     {
         itemCount++;
         UpdateText();
     }
 
-    /// <summary>
-    /// 슬롯의 아이템을 지정한 수량만큼 제거합니다. 0이 되면 슬롯을 비웁니다.
-    /// </summary>
     public void RemoveCount(int count = 1)
     {
         itemCount = Mathf.Max(0, itemCount - count);
         if (itemCount == 0)
-        {
             ClearSlot();
-        }
         else
-        {
             UpdateText();
-        }
     }
 
-    /// <summary>
-    /// 슬롯을 완전히 초기화(비움)합니다.
-    /// </summary>
     public void ClearSlot()
     {
         currentItem = null;
@@ -66,9 +50,6 @@ public class InventorySlot : MonoBehaviour
         amountText.text = "";
     }
 
-    /// <summary>
-    /// 이 슬롯이 선택된 상태인지에 따라 배경을 변경합니다.
-    /// </summary>
     public void SetSelected(bool isSelected)
     {
         backgroundImage.sprite = isSelected ? selectedBackground : normalBackground;
@@ -78,6 +59,9 @@ public class InventorySlot : MonoBehaviour
     public bool Matches(ItemData item) => currentItem == item;
     public bool IsFull() => currentItem != null && itemCount >= currentItem.maxStack;
     public int GetCount() => itemCount;
+
+    /// <summary>현재 슬롯에 있는 아이템을 반환합니다 (없으면 null)</summary>
+    public ItemData GetCurrentItem() => currentItem;
 
     private void UpdateText()
     {

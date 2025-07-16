@@ -15,12 +15,18 @@ public class CraftingManager : MonoBehaviour
 
     [Header("Recipes")]
     public List<Recipe> recipes;
-
     [Header("References")]
     public InventoryManager inventoryManager;
     public TextMeshProUGUI alertText;
+    [Tooltip("잘못된 조합 시 나오는 쓰레기 아이템")]
+    public ItemData trashItem;
+
+    [Header("Input Keys")]
+    public KeyCode depositKey = KeyCode.E;
+    public KeyCode craftKey = KeyCode.C;
 
     private bool isInCraftingZone = false;
+    private List<ItemData> containerItems = new List<ItemData>();
 
     void Start()
     {
@@ -30,50 +36,82 @@ public class CraftingManager : MonoBehaviour
 
     void Update()
     {
-        // C 키로 첫 번째 레시피 제작 시도 (필요시 UI 선택 로직 추가)
-        if (Input.GetKeyDown(KeyCode.C) && recipes.Count > 0)
+        if (!isInCraftingZone) return;
+
+        // 아이템 투입
+        if (Input.GetKeyDown(depositKey))
         {
-            TryCraft(recipes[0]);
+            DepositSelectedItem();
+        }
+        // 조리 시도
+        if (Input.GetKeyDown(craftKey))
+        {
+            if (recipes.Count > 0)
+                TryCraft(recipes[0]);
         }
     }
 
-    /// <summary>
-    /// 레시피에 필요한 재료가 있는지, 요리 공간에 있는지 확인 후 제작합니다.
-    /// </summary>
+    void DepositSelectedItem()
+    {
+        var item = inventoryManager.GetSelectedItem();
+        if (item == null)
+        {
+            StartCoroutine(ShowAlert("투입할 아이템이 없습니다."));
+            return;
+        }
+        if (inventoryManager.RemoveItem(item, 1))
+        {
+            containerItems.Add(item);
+            StartCoroutine(ShowAlert(item.itemName + " 투입 완료"));
+        }
+    }
+
     public void TryCraft(Recipe recipe)
     {
-        if (!isInCraftingZone)
+        // 투입된 개수와 레시피 개수 비교
+        if (containerItems.Count != recipe.ingredients.Count)
         {
-            StartCoroutine(ShowAlert("요리 공간 안에 있어야 제작할 수 있습니다."));
+            StartCoroutine(ShowAlert("레시피 재료 개수가 일치하지 않습니다."));
+            ReturnAllIngredients();
             return;
         }
 
-        // 재료 체크
+        // 재료 일치 검사
+        var temp = new List<ItemData>(containerItems);
+        bool match = true;
         foreach (var ing in recipe.ingredients)
         {
-            if (!inventoryManager.HasItem(ing, 1))
+            if (!temp.Remove(ing))
             {
-                StartCoroutine(ShowAlert($"재료 부족: {ing.itemName}"));
-                return;
+                match = false;
+                break;
             }
         }
 
-        // 재료 제거
-        foreach (var ing in recipe.ingredients)
+        if (match)
         {
-            inventoryManager.RemoveItem(ing, 1);
+            inventoryManager.AddItem(recipe.result);
+            StartCoroutine(ShowAlert(recipe.result.itemName + " 제작 완료!"));
+        }
+        else
+        {
+            inventoryManager.AddItem(trashItem);
+            StartCoroutine(ShowAlert("잘못된 조합! 쓰레기 생성"));
         }
 
-        // 결과 아이템 추가
-        inventoryManager.AddItem(recipe.result);
-        StartCoroutine(ShowAlert($"{recipe.result.itemName} 제작 완료!"));
+        containerItems.Clear();
+    }
+
+    void ReturnAllIngredients()
+    {
+        foreach (var ing in containerItems)
+            inventoryManager.AddItem(ing);
+        containerItems.Clear();
     }
 
     private IEnumerator ShowAlert(string msg)
     {
-        if (alertText == null)
-            yield break;
-
+        if (alertText == null) yield break;
         alertText.text = msg;
         alertText.gameObject.SetActive(true);
         yield return new WaitForSeconds(2f);
@@ -84,8 +122,8 @@ public class CraftingManager : MonoBehaviour
     {
         if (other.CompareTag("CraftingZone"))
         {
-            Debug.Log("▶️ 플레이어가 요리 공간에 들어왔습니다.");
             isInCraftingZone = true;
+            StartCoroutine(ShowAlert("요리 공간에 입장했습니다."));
         }
     }
 
@@ -93,8 +131,10 @@ public class CraftingManager : MonoBehaviour
     {
         if (other.CompareTag("CraftingZone"))
         {
-            Debug.Log("◀️ 플레이어가 요리 공간을 벗어났습니다.");
             isInCraftingZone = false;
+            StartCoroutine(ShowAlert("요리 공간을 벗어났습니다."));
+            // 미사용 재료 반환
+            ReturnAllIngredients();
         }
     }
 }
