@@ -9,23 +9,23 @@ public class CraftingManager : MonoBehaviour
     public class Recipe
     {
         public string recipeName;
-        public ItemData result;
-        public List<ItemData> ingredients;
+        public ItemData result;                 // 완성품
+        public List<ItemData> ingredients;      // 필요한 재료 리스트
     }
 
     [Header("Recipes")]
     public List<Recipe> recipes;
+
     [Header("References")]
-    public InventoryManager inventoryManager;
-    public TextMeshProUGUI alertText;
-    [Tooltip("잘못된 조합 시 나오는 쓰레기 아이템")]
-    public ItemData trashItem;
+    public InventoryManager inventoryManager;   // 인벤토리 매니저
+    public TextMeshProUGUI alertText;           // 알림용 텍스트
+    public ItemData trashItem;                  // 실패 시 생성할 쓰레기
 
-    [Header("Input Keys")]
-    public KeyCode depositKey = KeyCode.E;
-    public KeyCode craftKey = KeyCode.C;
+    [Header("Control Keys")]
+    public KeyCode depositKey = KeyCode.E;      // 재료 투입
+    public KeyCode craftKey = KeyCode.C;      // 제작 시도
 
-    private bool isInCraftingZone = false;
+    private bool isInZone = false;
     private List<ItemData> containerItems = new List<ItemData>();
 
     void Start()
@@ -36,47 +36,47 @@ public class CraftingManager : MonoBehaviour
 
     void Update()
     {
-        if (!isInCraftingZone) return;
+        if (!isInZone) return;
 
-        // 아이템 투입
+        // 1) 재료 투입 (E)
         if (Input.GetKeyDown(depositKey))
-        {
-            DepositSelectedItem();
-        }
-        // 조리 시도
-        if (Input.GetKeyDown(craftKey))
-        {
-            if (recipes.Count > 0)
-                TryCraft(recipes[0]);
-        }
+            DepositItem();
+
+        // 2) 제작 시도 (C)
+        if (Input.GetKeyDown(craftKey) && recipes.Count > 0)
+            TryCraft(recipes[0]);
     }
 
-    void DepositSelectedItem()
+    void DepositItem()
     {
         var item = inventoryManager.GetSelectedItem();
         if (item == null)
         {
-            StartCoroutine(ShowAlert("투입할 아이템이 없습니다."));
+            ShowAlert("투입할 재료가 없습니다.");
             return;
         }
         if (inventoryManager.RemoveItem(item, 1))
         {
             containerItems.Add(item);
-            StartCoroutine(ShowAlert(item.itemName + " 투입 완료"));
+            ShowAlert(item.itemName + " 투입 완료");
+        }
+        else
+        {
+            ShowAlert("재료 수량 부족");
         }
     }
 
-    public void TryCraft(Recipe recipe)
+    void TryCraft(Recipe recipe)
     {
-        // 투입된 개수와 레시피 개수 비교
+        // 투입된 개수 체크
         if (containerItems.Count != recipe.ingredients.Count)
         {
-            StartCoroutine(ShowAlert("레시피 재료 개수가 일치하지 않습니다."));
-            ReturnAllIngredients();
+            ShowAlert("투입 재료 개수가 일치하지 않습니다.");
+            ReturnAll();
             return;
         }
 
-        // 재료 일치 검사
+        // 재료 매칭 체크
         var temp = new List<ItemData>(containerItems);
         bool match = true;
         foreach (var ing in recipe.ingredients)
@@ -88,53 +88,61 @@ public class CraftingManager : MonoBehaviour
             }
         }
 
+        // 결과 처리
         if (match)
         {
             inventoryManager.AddItem(recipe.result);
-            StartCoroutine(ShowAlert(recipe.result.itemName + " 제작 완료!"));
+            ShowAlert(recipe.result.itemName + " 제작 완료!");
         }
         else
         {
             inventoryManager.AddItem(trashItem);
-            StartCoroutine(ShowAlert("잘못된 조합! 쓰레기 생성"));
+            ShowAlert("잘못된 조합! 쓰레기 생성");
         }
 
         containerItems.Clear();
     }
 
-    void ReturnAllIngredients()
+    void ReturnAll()
     {
+        // 투입해둔 재료 전부 반환
         foreach (var ing in containerItems)
             inventoryManager.AddItem(ing);
         containerItems.Clear();
     }
 
-    private IEnumerator ShowAlert(string msg)
+    void ShowAlert(string msg)
     {
-        if (alertText == null) yield break;
+        if (alertText == null)
+        {
+            Debug.LogWarning("CraftingManager: alertText 미할당 – 메시지: " + msg);
+            return;
+        }
+        StopAllCoroutines();
         alertText.text = msg;
         alertText.gameObject.SetActive(true);
+        StartCoroutine(ClearAlert());
+    }
+
+    IEnumerator ClearAlert()
+    {
         yield return new WaitForSeconds(2f);
-        alertText.gameObject.SetActive(false);
+        if (alertText != null)
+            alertText.gameObject.SetActive(false);
     }
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("CraftingZone"))
-        {
-            isInCraftingZone = true;
-            StartCoroutine(ShowAlert("요리 공간에 입장했습니다."));
-        }
+        if (other.gameObject.CompareTag("CraftingZone"))
+            isInZone = true;
     }
 
     void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("CraftingZone"))
+        if (other.gameObject.CompareTag("CraftingZone"))
         {
-            isInCraftingZone = false;
-            StartCoroutine(ShowAlert("요리 공간을 벗어났습니다."));
-            // 미사용 재료 반환
-            ReturnAllIngredients();
+            isInZone = false;
+            ReturnAll();
         }
     }
 }

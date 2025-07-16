@@ -40,8 +40,23 @@ public class MonsterAI : MonoBehaviour
         cc = GetComponent<CharacterController>();
         spawnPos = transform.position;
 
+        // ▼ 추가: 바닥 착지
+        SnapToGround();
+
         if (player == null)
             player = GameObject.FindWithTag("Player")?.transform;
+    }
+
+    void SnapToGround()
+    {
+        RaycastHit hit;
+        // 레이를 몬스터 바로 아래로 쏘고, 레이어 마스크가 필요하다면 추가하세요.
+        if (Physics.Raycast(transform.position, Vector3.down, out hit, 100f))
+        {
+            Vector3 p = transform.position;
+            p.y = hit.point.y;
+            transform.position = p;
+        }
     }
 
     void Update()
@@ -97,19 +112,26 @@ public class MonsterAI : MonoBehaviour
         if (Time.time - lastAttackTime < interval) return;
         lastAttackTime = Time.time;
 
-        // PlayerHealth 컴포넌트 가져오기
+        // 공격 시도 로그
+        Debug.Log($"[MonsterAI] TryAttack() 호출. 상태: {state}, 거리: {Vector3.Distance(transform.position, player.position)}");
+
+        // PlayerHealth 컴포넌트 찾아보기
         PlayerHealth ph = player.GetComponent<PlayerHealth>()
                          ?? player.GetComponentInChildren<PlayerHealth>();
-        if (ph == null) return;
+        if (ph == null)
+        {
+            Debug.LogError("[MonsterAI] PlayerHealth 컴포넌트를 찾지 못했습니다! player=" + player.name);
+            return;
+        }
 
+        // 실제 대미지 적용 로그
+        Debug.Log("[MonsterAI] 플레이어에게 1칸 대미지 적용!");
         if (type == MonsterType.Krang)
         {
-            // 크앙: 스턴만
             StartCoroutine(StunPlayer());
         }
         else
         {
-            // 대두마뱀/토마톡: 몸통 박치기 → 1칸 피해
             ph.TakeDamageSlots(1);
         }
     }
@@ -128,13 +150,13 @@ public class MonsterAI : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag(safeZoneTag))
+        if (!string.IsNullOrEmpty(safeZoneTag) && other.gameObject.tag == safeZoneTag)
             inSafeZone = true;
     }
 
     void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag(safeZoneTag))
+        if (!string.IsNullOrEmpty(safeZoneTag) && other.gameObject.tag == safeZoneTag)
             inSafeZone = false;
     }
 }

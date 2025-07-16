@@ -5,61 +5,90 @@ using UnityEngine.UI;
 
 public class PlayerHealth : MonoBehaviour
 {
-    [Header("HP Slots")]
-    [Tooltip("총 체력 칸 개수 (기본 5)")]
+    [Header("설정")]
     public int maxHpSlots = 5;
-    private int currentHpSlots;
-
-    [Tooltip("체력을 표시할 Image 슬롯들 (왼→오 순서대로)")]
     public Image[] hpSegments;
-
-    [Tooltip("체력 칸이 가득 찼을 때 스프라이트")]
     public Sprite filledSprite;
-    [Tooltip("체력 칸이 비었을 때 스프라이트")]
     public Sprite emptySprite;
+
+    public Camera playerCamera;   // 직접 연결하는 방식으로 변경
+
+    private int currentHpSlots;
+    private bool isDead = false;
 
     void Start()
     {
-        // 초기화
+        if (playerCamera == null)
+            playerCamera = GetComponentInChildren<Camera>();
+
         currentHpSlots = maxHpSlots;
         UpdateHpUI();
     }
 
-    /// <summary>
-    /// 슬롯 단위로 데미지를 입힙니다.
-    /// 한 대 맞을 때마다 slots 개수만큼 체력 칸이 깎입니다.
-    /// </summary>
-    /// <param name="slots">깎을 칸 개수 (보통 1)</param>
     public void TakeDamageSlots(int slots)
     {
-        currentHpSlots = Mathf.Clamp(currentHpSlots - slots, 0, maxHpSlots);
+        if (isDead) return;
+
+        currentHpSlots -= slots;
+        currentHpSlots = Mathf.Clamp(currentHpSlots, 0, maxHpSlots);
         UpdateHpUI();
 
-        if (currentHpSlots == 0)
+        if (currentHpSlots <= 0)
             Die();
     }
 
-    /// <summary>
-    /// HP 슬롯 UI를 채움/빈칸 스프라이트로 갱신합니다.
-    /// </summary>
     private void UpdateHpUI()
     {
         for (int i = 0; i < hpSegments.Length; i++)
         {
             if (hpSegments[i] == null) continue;
-            hpSegments[i].sprite = (i < currentHpSlots) ? filledSprite : emptySprite;
+            if (i < currentHpSlots)
+            {
+                hpSegments[i].sprite = filledSprite;
+                hpSegments[i].enabled = true;
+            }
+            else
+            {
+                hpSegments[i].sprite = emptySprite;
+                hpSegments[i].enabled = true;
+            }
         }
     }
 
-    /// <summary>
-    /// 플레이어 체력이 0이 되었을 때 호출됩니다.
-    /// </summary>
     private void Die()
     {
-        // TODO: 사망 이펙트, 리스폰, 게임 오버 화면 등 원하는 로직 추가
-        Debug.Log("Player has died.");
-        // 예시: 이동/조작 비활성화
+        isDead = true;
+        Debug.Log("플레이어 사망");
+
         var controller = GetComponent<PlayerController>();
         if (controller != null) controller.enabled = false;
+
+        if (playerCamera != null)
+        {
+            var mouseLook = playerCamera.GetComponent<MouseLook>();
+            if (mouseLook != null) mouseLook.enabled = false;
+        }
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+    public void RestoreFullHp()
+    {
+        currentHpSlots = maxHpSlots;
+        UpdateHpUI();
+        isDead = false;
+
+        var controller = GetComponent<PlayerController>();
+        if (controller != null) controller.enabled = true;
+
+        if (playerCamera != null)
+        {
+            var mouseLook = playerCamera.GetComponent<MouseLook>();
+            if (mouseLook != null) mouseLook.enabled = true;
+        }
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 }

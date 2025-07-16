@@ -39,44 +39,58 @@ public class InventoryManager : MonoBehaviour
     public void AddItem(ItemData newItem)
     {
         foreach (var slot in slots)
+        {
             if (!slot.IsEmpty() && slot.Matches(newItem) && !slot.IsFull())
             {
                 slot.AddCount();
                 return;
             }
+        }
         foreach (var slot in slots)
+        {
             if (slot.IsEmpty())
             {
                 slot.SetItem(newItem);
                 return;
             }
+        }
         Debug.Log("인벤토리 가득 참");
     }
 
     public bool HasItem(ItemData item, int amount)
     {
         foreach (var slot in slots)
+        {
             if (!slot.IsEmpty() && slot.Matches(item) && slot.GetCount() >= amount)
                 return true;
+        }
         return false;
     }
 
     public bool RemoveItem(ItemData item, int amount)
     {
         foreach (var slot in slots)
+        {
             if (!slot.IsEmpty() && slot.Matches(item))
             {
                 slot.RemoveCount(amount);
                 return true;
             }
+        }
         return false;
     }
 
-    /// <summary>현재 선택된 슬롯의 아이템을 반환합니다.</summary>
     public ItemData GetSelectedItem()
     {
         if (selectedIndex >= 0 && selectedIndex < slots.Length)
             return slots[selectedIndex].GetCurrentItem();
         return null;
+    }
+
+    public void SelectSlot(int index)
+    {
+        if (index < 0 || index >= slots.Length) return;
+        selectedIndex = index;
+        UpdateSlotHighlight();
     }
 }
